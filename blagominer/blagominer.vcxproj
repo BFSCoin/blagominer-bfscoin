@@ -645,6 +645,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="aes256.h" />
     <ClInclude Include="blagominer.h" />
     <ClInclude Include="bfs.h" />
     <ClInclude Include="error.h" />
@@ -665,6 +666,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="accounts.cpp" />
+    <ClCompile Include="aes256.cpp" />
     <ClCompile Include="blagominer.cpp" />
     <ClCompile Include="logger.cpp" />
     <ClCompile Include="mshabal_256.c" />

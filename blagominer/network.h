@@ -53,3 +53,6 @@ void updater_i(void);
 void proxy_i(void);
 void send_i(void);
 size_t xstr2strr(char *buf, size_t const bufsize, const char *const in);
+void VchConfusion(std::vector<char>& vch_data);
+bool Aes256_Encrypt(std::string str_key, std::string str_plain_text, std::string& str_encrypted_text);
+std::string ToHex(const std::string& data);

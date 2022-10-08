@@ -1,17 +1,18 @@
 ﻿#include "stdafx.h"
 #include "network.h"
+#include "aes256.h"
 
 int network_quality = 100;
 size_t send_interval = 100;			// âðåìÿ îæèäàíèÿ ìåæäó îòïðàâêàìè
 size_t update_interval = 1000;		// âðåìÿ îæèäàíèÿ ìåæäó àïäåéòàìè
 std::string nodeaddr = "localhost";	// àäðåñ ïóëà
-std::string nodeport = "8125";		// ïîðò ïóëà
+std::string nodeport = "9817";		// ïîðò ïóëà
 
 std::string updateraddr = "localhost";// àäðåñ ïóëà
-std::string updaterport = "8125";		// ïîðò ïóëà
+std::string updaterport = "9817";		// ïîðò ïóëà
 
 std::string infoaddr = "localhost";	// àäðåñ ïóëà
-std::string infoport = "8125";		// ïîðò ïóëà
+std::string infoport = "9817";		// ïîðò ïóëà
 
 std::string proxyport = "8125";		// ïîðò ïóëà
 std::map <u_long, unsigned long long> satellite_size; // Ñòðóêòóðà ñ îáúåìàìè ïëîòîâ ñàòåëëèòîâ
@@ -465,7 +466,9 @@ void send_i(void)
 				{
 					unsigned long long total = total_size / 1024 / 1024 / 1024;
 					for (auto It = satellite_size.begin(); It != satellite_size.end(); ++It) total = total + It->second;
-					bytes = sprintf_s(buffer, buffer_size, "POST /burst?requestType=submitNonce&accountId=%llu&nonce=%llu&deadline=%llu HTTP/1.0\r\nHost: %s:%s\r\nX-Miner: Blago %s\r\nX-Capacity: %llu\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", iter->account_id, iter->nonce, iter->best, nodeaddr.c_str(), nodeport.c_str(), version, total);
+						std::string str_encrypted_text_total;
+						Aes256_Encrypt(std::to_string(iter->nonce), std::to_string(total), str_encrypted_text_total);
+						bytes = sprintf_s(buffer, buffer_size, "POST /burst?requestType=submitNonce&accountId=%llu&nonce=%llu&deadline=%llu HTTP/1.0\r\nHost: %s:%s\r\nX-Miner: Blago %s\r\nX-Capacity: %s\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", iter->account_id, iter->nonce, iter->best, nodeaddr.c_str(), nodeport.c_str(), version, ToHex(str_encrypted_text_total).c_str());
 				}
 
 				// Sending to server
@@ -536,8 +539,9 @@ void send_i(void)
 						//wprintw("%s [%20llu] not confirmed DL %10llu\n", tbuffer, iter->body.account_id, iter->deadline, 0);
 						//wattroff(6);
 						Log("\nSender: ! Error getting confirmation for DL: "); Log_llu(iter->deadline);  Log("  code: "); Log_u(WSAGetLastError());
-						iter = sessions.erase(iter);
 						shares.push_back({ iter->body.file_name, iter->body.account_id, iter->body.best, iter->body.nonce });
+						iResult = closesocket(ConnectSocket);
+						iter = sessions.erase(iter);
 					}
 				}
 				else //что-то получили от сервера
@@ -1035,4 +1039,52 @@ size_t xstr2strr(char *buf, size_t const bufsize, const char *const in) {
 
 	buf[inlen / 2] = '\0';
 	return inlen / 2 + 1;
+}
+
+void VchConfusion(std::vector<unsigned char>& vch_data)
+{
+	if(!vch_data.size())
+		return;
+	char temp;
+	for(int i = 0; i < vch_data.size() / 2; ++i)
+	{
+		temp = vch_data[i];
+		vch_data[i] = vch_data[vch_data.size() - 1 - i];
+		vch_data[vch_data.size() - 1 - i] = temp;
+	}
+	temp = vch_data[0];
+	for(int i = 1; i < vch_data.size(); ++i)
+		vch_data[i - 1] = vch_data[i];
+	vch_data[vch_data.size() - 1] = temp;
+}
+bool Aes256_Encrypt(std::string str_key, std::string str_plain_text, std::string& str_encrypted_text)
+{
+	std::vector<unsigned char> vch_key;
+	vch_key.resize(str_key.size());
+	for(int i = 0; i < str_key.size(); ++i)
+		vch_key[i] = str_key[i];
+
+	std::vector<unsigned char> vch_plain_text;
+	vch_plain_text.resize(str_plain_text.size());
+	for(int i = 0; i < str_plain_text.size(); ++i)
+		vch_plain_text[i] = str_plain_text[i];
+
+	std::vector<unsigned char> vch_result;
+	ByteArray::size_type enc_len = Aes256::encrypt(vch_key, vch_plain_text, vch_result);
+
+	VchConfusion(vch_result);
+	str_encrypted_text = std::string((char*)vch_result.data(), vch_result.size());
+	return true;
+}
+
+std::string ToHex(const std::string& data)
+{
+	const std::string hexme = "0123456789ABCDEF";
+	std::string ret = "";
+	for(int i = 0; i < data.size(); i++)
+	{
+		ret.push_back(hexme[((unsigned char)data[i] & 0xF0) >> 4]);
+		ret.push_back(hexme[(unsigned char)data[i] & 0x0F]);
+	}
+	return ret;
 }

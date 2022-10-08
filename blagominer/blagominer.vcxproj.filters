@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="AES">
+      <UniqueIdentifier>{493682d9-37b9-488f-8aaa-bc15884ec947}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -66,6 +69,9 @@
     <ClInclude Include="sph_types.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="aes256.h">
+      <Filter>AES</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -112,6 +118,9 @@
     </ClCompile>
     <ClCompile Include="mshabal_512.c">
       <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="aes256.cpp">
+      <Filter>AES</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
